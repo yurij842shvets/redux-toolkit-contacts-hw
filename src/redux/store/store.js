@@ -23,10 +23,7 @@ const filterPersistConfig = {
   storage,
 };
 
-const persistedContactsReducer = persistReducer(
-  contactsPersistConfig,
-  contactsSlice
-);
+const persistedContactsReducer = persistReducer(contactsPersistConfig, contactsSlice);
 const persistedFilterReducer = persistReducer(filterPersistConfig, filterSlice);
 
 export const store = configureStore({
