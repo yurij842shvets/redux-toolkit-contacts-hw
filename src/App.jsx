@@ -1,43 +1,58 @@
 import "./App.css";
 import { useDispatch, useSelector } from "react-redux";
-import { addContacts, removeContacts, fetchContacts} from './redux/slice/contactsSlice';
+import { fetchContacts, addContact, deleteContact, updateContact } from "./operations/contactsOperations";
 import { setFilter } from "./redux/slice/filterSlice";
 import { useState, useEffect } from "react";
 
 function App() {
-  const [phone, setPhone] = useState("");
-  const [name, setName] = useState("");
 
   const dispatch = useDispatch();
-  const contacts = useSelector((state) => state.contacts?.list || []);
-  const filter = useSelector((state) => state.filter?.value ?? "");
+  const filter = useSelector((state) => state.filter.value);
+  const {list, isLoading, error} = useSelector(state => state.contacts)
 
-  const normalizedFilter = (typeof filter === "string" ? filter : String(filter)).toLowerCase();
-
-  const filteredContacts = Array.isArray(contacts)
-    ? contacts.filter((contact) => {
-        const name = (contact.name || "").toString().toLowerCase();
-        const number = contact.number !== undefined && contact.number !== null ? String(contact.number) : "";
-        return name.includes(normalizedFilter) || number.includes(normalizedFilter);
-      })
-    : [];
-
-  const handleAdd = () => {
-    if (!name || !phone) return;
-    dispatch(addContacts({name, number: phone}));
-    setName("");
-    setPhone("");
-  };
+  const [number, setNumber] = useState("");
+  const [name, setName] = useState("");
+  const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
     dispatch(fetchContacts())
   }, [dispatch])
 
+  const filteredContacts = list.filter((contact) => {
+        const name = (contact.name || "").toString().toLowerCase();
+        const number = contact.number !== undefined && contact.number !== null ? String(contact.number) : "";
+        return name.includes(filter.toLowerCase()) || number.includes(filter.toLowerCase());
+      })
+
+    if (isLoading) return <p>...Завантаження</p> 
+    if (error) return <p>помилка {error}</p> 
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (!name || !number) return;
+    if (editingId) {
+    dispatch(updateContact({id: editingId, updateContact: {name, number}}));
+      setEditingId(null);
+      }
+    else {
+    dispatch(addContact({ name, number }));
+    }
+    setName("");
+    setNumber("");
+  }; 
+  const handleEdit = (contact) => {
+    setName(contact.name);
+    setNumber(contact.number);
+    setEditingId(contact.id);
+  }
+
   return (
     <>
       <div>
         <h2>Книга контактів</h2>
-
+      <form action="
+      
+      " onSubmit={handleSubmit}>
         <input
           placeholder="Ім'я"
           value={name}
@@ -47,11 +62,12 @@ function App() {
         <input
           type="number"
           placeholder="Телефон"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          value={number}
+          onChange={(e) => setNumber(e.target.value)}
         />
-        <button onClick={handleAdd}>Додати</button>
+        <button type="submit">{editingId ? 'зберегти':'додати'}</button>
 
+</form>
         <input
           placeholder="Пошук"
           value={filter}
@@ -62,8 +78,12 @@ function App() {
           {filteredContacts.map((contact) => (
             <li key={contact.id}>
               {contact.name} — {contact.number}
-              <button onClick={() => dispatch(removeContacts(contact.id))}>
-                delete
+
+              <button onClick={() => handleEdit(contact)}>
+                редагувати
+              </button>
+              <button onClick={() => dispatch(deleteContact(contact.id))}>
+                видалити
               </button>
             </li>
           ))}

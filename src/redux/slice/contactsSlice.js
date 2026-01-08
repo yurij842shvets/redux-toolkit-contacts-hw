@@ -1,24 +1,10 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice} from "@reduxjs/toolkit";
 import {
-  fetchContactsAPI,
-  addContactAPI,
-  removeContactAPI,
-} from "../../contacts/contactsAPI";
-
-export const fetchContacts = createAsyncThunk(
-  "contacts/fetchContacts",
-  async () => await fetchContactsAPI()
-);
-
-export const addContacts = createAsyncThunk(
-  "contacts/addContact",
-  async (contact) => await addContactAPI(contact)
-);
-
-export const removeContacts = createAsyncThunk(
-  "contacts/removeContact",
-  async (id) => await removeContactAPI(id)
-);
+  fetchContacts,
+  addContact,
+  deleteContact,
+  updateContact
+} from "../../operations/contactsOperations";
 
 export const contactsSlice = createSlice({
   name: "contacts",
@@ -42,36 +28,24 @@ export const contactsSlice = createSlice({
         state.isLoading = false;
         state.error = action.error.message;
       })
-      .addCase(addContacts.fulfilled, (state, action) => {
+      .addCase(addContact.fulfilled, (state, action) => {
         state.list.push(action.payload);
       })
-      .addCase(removeContacts.fulfilled, (state, action) => {
+      .addCase(deleteContact.fulfilled, (state, action) => {
+        const deletedId = action.payload && action.payload.id ? action.payload.id : action.payload;
         state.list = state.list.filter(
-          (contact) => contact.id !== action.payload
+          (contact) => contact.id !== deletedId
         );
-      });
+      })
+      .addCase(updateContact.fulfilled, (state, action) => {
+        const index = state.list.findIndex(
+          item => item.id === action.payload.id
+        )
+        if(index !== -1) {
+          state.list[index] = action.payload
+        }
+      })
   },
-
-  // addContact: {
-  //   reducer(state, action) {
-  //     state.list.push(action.payload);
-  //   },
-  //   prepare(name, number) {
-  //     return {
-  //       payload: {
-  //         id: nanoid(),
-  //         name,
-  //         number,
-  //       },
-  //     };
-  //   },
-  // },
-
-  // removeContact(state, action) {
-  //   state.list = state.list.filter(
-  //     (contact) => contact.id !== action.payload
-  //   );
-  // },
 });
 
-export default contactsSlice.reducer;
+export const contactsReducer = contactsSlice.reducer

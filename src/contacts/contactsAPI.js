@@ -8,7 +8,7 @@ export const fetchContactsAPI = async () => {
 }
 
 export const addContactAPI = async (contact) => {
-  const res = await post(BASE_URL, contact);
+  const res = await axios.post(BASE_URL, contact);
   return res.data;
 }
 
