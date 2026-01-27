@@ -1,19 +1,18 @@
-import "./App.css";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchContacts,
   addContact,
   deleteContact,
   updateContact,
-} from "./redux/operations/contactsOperations";
-import { setFilter } from "./redux/slice/filterSlice";
+} from "../redux/operations/contactsOperations";
+import { setFilter } from "../redux/slice/filterSlice";
 import { useState, useEffect } from "react";
 import {
   selectVisibleContacts,
   selectContactCount,
   selectFilter,
-} from "./redux/selectors/selectors";
-import { statusFilters } from "./redux/constants/constants";
+} from "../redux/selectors/selectors";
+import { statusFilters } from "../redux/constants/constants";
 
 export default function Contacts() {
   const dispatch = useDispatch();
