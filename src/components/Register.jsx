@@ -6,7 +6,7 @@ export default function Register() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    form = e.currentTarget;
+    let form = e.currentTarget;
     dispatch(
       register({
         name: form.elements.name.value,

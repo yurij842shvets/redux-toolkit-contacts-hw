@@ -10,7 +10,7 @@ export default function Login() {
         dispatch(
           logIn({
             email: form.elements.email.value,
-            passsword: form.elements.password.value
+            password: form.elements.password.value
           })
         )
     }
@@ -25,7 +25,7 @@ export default function Login() {
 
         <label htmlFor="">
             Password
-            <input type="password" />
+            <input type="password" name="password"/>
         </label>
 
         <button type="submit">Log In</button>

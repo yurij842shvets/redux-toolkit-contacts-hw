@@ -1,9 +1,10 @@
-import { authReducer } from "../redux/slice/authSlice"
-import {Navigate} from 'react-router'
+import { useSelector } from 'react-redux'
+import {Navigate} from 'react-router-dom'
 
-export const PrivateRoute = ({component: Component, redirectTo = '/'}) => {
-    const {isLoggedIn, isRefreshing} = authReducer()
-    const route = !isLoggedIn && !isRefreshing
+export const PrivateRoute = ({children, redirectTo = '/'}) => {
+    const isLoggedIn = useSelector(state => state.auth.isLoggedIn)
+    const isRefreshing = useSelector(state => state.auth.isRefreshing)
+    const shouldRedirect = !isLoggedIn && !isRefreshing
 
-    {route ? <Navigate redirectTo={redirectTo}/> : Component}
+    return shouldRedirect ? <Navigate to={redirectTo}/> : children
 }

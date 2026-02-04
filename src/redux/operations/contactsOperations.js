@@ -12,31 +12,44 @@ const setAuthHeader = (token) => {
   axios.defaults.headers.common.Authorization = `${token}`;
 };
 
-const clearAuthHeader = (token) => {
+const clearAuthHeader = () => {
   axios.defaults.headers.common.Authorization = ``;
 };
 
 export const fetchContacts = createAsyncThunk(
   "contacts/fetchContacts",
   async (_, thunkAPI) => {
+    const state = thunkAPI.getState();
+    const userEmail = state.auth.user.email;
+
     try {
-      return await fetchContactsAPI();
+      const all = await fetchContactsAPI();
+
+      return all.filter(c => c.owner === userEmail);
     } catch (e) {
       return thunkAPI.rejectWithValue(e.message);
     }
-  },
+  }
 );
+
 
 export const addContact = createAsyncThunk(
   "contacts/addContact",
   async (contact, thunkAPI) => {
+    const state = thunkAPI.getState();
+    const userEmail = state.auth.user.email;
+
     try {
-      return await addContactAPI(contact);
+      return await addContactAPI({
+        ...contact,
+        owner: userEmail
+      });
     } catch (e) {
       return thunkAPI.rejectWithValue(e.message);
     }
-  },
+  }
 );
+
 
 export const deleteContact = createAsyncThunk(
   "contacts/removeContact",
@@ -64,11 +77,35 @@ export const register = createAsyncThunk(
   "auth/register",
   async (credentials, thunkAPI) => {
     try {
-      const res = await axios.post("/users/signup", credentials);
-      setAuthHeader(res.data.token);
-      return res.data;
+      const users = JSON.parse(localStorage.getItem("users")) || [];
+
+      const exists = users.some((u) => u.email === credentials.email);
+
+      if (exists) {
+        return thunkAPI.rejectWithValue("User with this email already exists");
+      }
+
+      users.push({
+        name: credentials.name,
+        email: credentials.email,
+        password: credentials.password,
+      });
+
+      localStorage.setItem("users", JSON.stringify(users));
+
+      const fakeToken = "token-" + Date.now();
+      localStorage.setItem("token", fakeToken);
+      localStorage.setItem("currentUserEmail", credentials.email);
+
+      return {
+        user: {
+          email: credentials.email,
+          name: credentials.name,
+        },
+        token: fakeToken,
+      };
     } catch (e) {
-      return thunkAPI.rejectWithValue(e.rejectWithValue(e.message));
+      return thunkAPI.rejectWithValue(e.message);
     }
   },
 );
@@ -77,39 +114,73 @@ export const logIn = createAsyncThunk(
   "auth/login",
   async (credentials, thunkAPI) => {
     try {
-      const res = await axios.post("/users/login", credentials);
-      setAuthHeader(res.data.token);
-      return res.data;
+      const users = JSON.parse(localStorage.getItem("users"));
+
+      const user = users.find(
+        (u) =>
+          u.email === credentials.email && u.password === credentials.password,
+      );
+
+      if (!user) {
+        return thunkAPI.rejectWithValue("Wrong email or password");
+      }
+
+      const fakeToken = "token-" + Date.now();
+      localStorage.setItem("token", fakeToken);
+      localStorage.setItem("currentUserEmail", user.email);
+
+      return {
+        user: {
+          email: user.email,
+          name: user.name,
+        },
+        token: fakeToken,
+      };
     } catch (e) {
-      return thunkAPI.rejectWithValue(e.rejectWithValue(e.message));
+      return thunkAPI.rejectWithValue(e.message);
     }
   },
 );
 
-export const logOut = createAsyncThunk("auth/logout", async (thunkAPI) => {
-  try {
-    await axios.post("/users/logout");
-    clearAuthHeader();
-  } catch (e) {
-    return thunkAPI.rejectWithValue(e.rejectWithValue(e.message));
-  }
+export const logOut = createAsyncThunk("auth/logout", async () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("currentUserEmail");
+  localStorage.removeItem("persist:contacts");
+
+  clearAuthHeader();
+
+  return true
 });
 
 export const refreshUser = createAsyncThunk(
   "auth/refresh",
   async (_, thunkAPI) => {
-    const state = thunkAPI.getState();
-    const persistedToken = state.auth.token;
-
-    if (persistedToken === null) {
-      return thunkAPI.rejectWithValue(e.rejectWithValue(e.message));
-    }
     try {
-      setAuthHeader(persistedToken);
-      const res = await axios.get("/users/me");
-      return res.data;
+      const token = localStorage.getItem("token");
+      const email = localStorage.getItem("currentUserEmail");
+
+      if (!token || !email) {
+        return thunkAPI.rejectWithValue("No session found");
+      }
+
+      const users = JSON.parse(localStorage.getItem("users")) || [];
+      const user = users.find((u) => u.email === email);
+
+      if (!user) {
+        return thunkAPI.rejectWithValue("User not found");
+      }
+
+      setAuthHeader(token);
+
+      return {
+        user: {
+          name: user.name,
+          email: user.email,
+        },
+        token,
+      };
     } catch (e) {
-      return thunkAPI.rejectWithValue(e.rejectWithValue(e.message));
+      return thunkAPI.rejectWithValue(e.message);
     }
   },
 );
