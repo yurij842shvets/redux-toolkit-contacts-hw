@@ -37,7 +37,9 @@ export default function Contacts() {
     e.preventDefault();
     if (!name || !number) return;
     if (editingId) {
-      dispatch(updateContact({ id: editingId, name, number }));
+      dispatch(
+        updateContact({ id: editingId, updateContact: { name, number } }),
+      );
       setEditingId(null);
     } else {
       dispatch(
@@ -56,12 +58,15 @@ export default function Contacts() {
   const handleToggleRead = (c) => {
     dispatch(
       updateContact({
-        ...c,
-        status:
-          c.status === statusFilters.read
-            ? statusFilters.unread
-            : statusFilters.read,
-        count: c.status === statusFilters.read ? c.count : c.count + 1,
+        id: c.id,
+        updateContact: {
+          ...c,
+          status:
+            c.status === statusFilters.read
+              ? statusFilters.unread
+              : statusFilters.read,
+          count: c.status === statusFilters.read ? c.count : c.count + 1,
+        },
       }),
     );
   };
